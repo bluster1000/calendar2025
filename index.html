@@ -81,12 +81,11 @@
       border: none;
       cursor: pointer;
     }
-    .남편 { background-color: #e3f2fd; }
-    .아들 { background-color: #fce4ec; }
-    .큰딸 { background-color: #e8f5e9; }
-    .작은딸 { background-color: #fff3e0; }
-    .없음 { background-color: #eeeeee; }
-
+    .남편 { background-color: #cce5ff; }
+    .아들 { background-color: #fff9c4; }
+    .큰딸 { background-color: #c8e6c9; }
+    .작은딸 { background-color: #e0e0e0; }
+    .없음 { background-color: #f5f5f5; }
     .weekday-labels {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -126,28 +125,35 @@
     #person-options button:hover {
       background-color: #e0e0e0;
     }
-    input.memo-input {
+    textarea.memo-input {
+      width: 100%;
+      font-size: 12px;
+      padding: 4px;
+      resize: none;
+      height: 3.6em;
+      line-height: 1.2em;
+    }
+    input.glucose-input {
       width: 100%;
       font-size: 12px;
       padding: 2px;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
   <h1>2025 일정표</h1>
-  <div class="version">v1.0</div>
+  <div class="version">v1.2</div>
   <div id="controls">
     <button onclick="changeMonth(-1)">&lt; 이전월</button>
     <h2 id="month-label">2025년 7월</h2>
     <button onclick="changeMonth(1)">다음월 &gt;</button>
     <button onclick="resetAllData()" style="background-color:#007bff; color:white;">전체 초기화</button>
   </div>
-
   <div class="weekday-labels">
     <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
   </div>
   <div class="calendar" id="calendar"></div>
-
   <div id="person-modal">
     <div id="person-modal-content">
       <h3>담당자 선택</h3>
@@ -155,14 +161,13 @@
       <button onclick="closePersonModal()">닫기</button>
     </div>
   </div>
-
   <script>
     const scheduleData = {};
     const calendar = document.getElementById('calendar');
     const monthLabel = document.getElementById('month-label');
     const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
     const members = ['없음', '남편', '큰딸', '작은딸', '아들'];
-    const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec"; // 구글 앱스 스크립트 URL
+    const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec";
 
     let month = localStorage.getItem('selectedMonth') ? parseInt(localStorage.getItem('selectedMonth')) : 6;
     let year = localStorage.getItem('selectedYear') ? parseInt(localStorage.getItem('selectedYear')) : 2025;
@@ -174,12 +179,10 @@
       const firstDay = new Date(year, month, 1);
       const startWeekDay = firstDay.getDay();
       const lastDate = new Date(year, month + 1, 0).getDate();
-
       const totalCells = Math.ceil((startWeekDay + lastDate) / 7) * 7;
       for (let i = 0; i < totalCells; i++) {
         const cell = document.createElement('div');
         cell.className = 'day-cell';
-
         const day = i - startWeekDay + 1;
         if (i >= startWeekDay && day <= lastDate) {
           const date = new Date(year, month, day);
@@ -187,16 +190,16 @@
           const mm = String(month + 1).padStart(2, '0');
           const dd = String(day).padStart(2, '0');
           const dateStr = `${yyyy}-${mm}-${dd}`;
-          const entry = scheduleData[dateStr] || { day: '', night: '', memo: '' };
-
+          const entry = scheduleData[dateStr] || { day: '', night: '', memo: '', morning: '', lunch: '' };
           const content = `
             <div class="date">${day}</div>
             <div class="cell-content">
               <button class="${entry.day || '없음'}" onclick="selectPerson('${dateStr}', 'day')">주: ${entry.day || ''}</button>
               <button class="${entry.night || '없음'}" onclick="selectPerson('${dateStr}', 'night')">야: ${entry.night || ''}</button>
-              <input class="memo-input" type="text" placeholder="메모" value="${entry.memo || ''}" onblur="saveMemo('${dateStr}', this.value)">
-            </div>
-          `;
+              <input class="glucose-input" placeholder="아침혈당" onblur="saveGlucose('${dateStr}', 'morning', this.value)" value="${entry.morning || ''}">
+              <input class="glucose-input" placeholder="점심혈당" onblur="saveGlucose('${dateStr}', 'lunch', this.value)" value="${entry.lunch || ''}">
+              <textarea class="memo-input" placeholder="메모" onblur="saveMemo('${dateStr}', this.value)">${entry.memo || ''}</textarea>
+            </div>`;
           cell.innerHTML = content;
         }
         calendar.appendChild(cell);
@@ -207,23 +210,18 @@
       currentSelect = { dateStr, shiftType };
       const optionsDiv = document.getElementById('person-options');
       optionsDiv.innerHTML = '';
-
       members.forEach(member => {
         const btn = document.createElement('button');
         btn.textContent = member;
         btn.onclick = () => {
-          const existing = scheduleData[dateStr] || { day: '', night: '', memo: '' };
-          scheduleData[dateStr] = {
-            ...existing,
-            [shiftType]: member === '없음' ? '' : member
-          };
+          const existing = scheduleData[dateStr] || { day: '', night: '', memo: '', morning: '', lunch: '' };
+          scheduleData[dateStr] = { ...existing, [shiftType]: member === '없음' ? '' : member };
           saveToSheet(dateStr);
           closePersonModal();
           renderCalendar();
         };
         optionsDiv.appendChild(btn);
       });
-
       document.getElementById('person-modal').style.display = 'flex';
     }
 
@@ -232,8 +230,14 @@
     }
 
     function saveMemo(dateStr, memo) {
-      const existing = scheduleData[dateStr] || { day: '', night: '', memo: '' };
+      const existing = scheduleData[dateStr] || { day: '', night: '', memo: '', morning: '', lunch: '' };
       scheduleData[dateStr] = { ...existing, memo };
+      saveToSheet(dateStr);
+    }
+
+    function saveGlucose(dateStr, type, value) {
+      const existing = scheduleData[dateStr] || { day: '', night: '', memo: '', morning: '', lunch: '' };
+      scheduleData[dateStr] = { ...existing, [type]: value };
       saveToSheet(dateStr);
     }
 
@@ -245,9 +249,10 @@
         weekday: weekdayStr,
         day: entry.day,
         night: entry.night,
-        memo: entry.memo
+        memo: entry.memo,
+        morning: entry.morning,
+        lunch: entry.lunch
       });
-
       fetch(scriptURL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -266,7 +271,6 @@
 
     function resetAllData() {
       if (!confirm("정말로 모든 데이터를 삭제하시겠습니까?")) return;
-
       fetch(scriptURL + "?resetAll=true", { method: "POST" })
         .then(() => { Object.keys(scheduleData).forEach(k => delete scheduleData[k]); renderCalendar(); })
         .catch(console.error);
@@ -280,7 +284,9 @@
             scheduleData[entry.date] = {
               day: entry.day || '',
               night: entry.night || '',
-              memo: entry.memo || ''
+              memo: entry.memo || '',
+              morning: entry.morning || '',
+              lunch: entry.lunch || ''
             };
           });
         });
