@@ -143,10 +143,10 @@
 </head>
 <body>
   <h1>2025 일정표</h1>
-  <div class="version">v1.5</div>
+  <div class="version">v1.6</div>
   <div id="controls">
     <button onclick="changeMonth(-1)">&lt; 이전월</button>
-    <h2 id="month-label">2025년 7월</h2>
+    <h2 id="month-label"></h2>
     <button onclick="changeMonth(1)">다음월 &gt;</button>
     <button onclick="resetAllData()" style="background-color:#007bff; color:white;">전체 초기화</button>
   </div>
@@ -169,8 +169,9 @@
     const members = ['없음', '남편', '큰딸', '작은딸', '아들'];
     const scriptURL = "https://script.google.com/macros/s/AKfycbzJoDx4HGGDekdyrCJXD-U5Z_LzuIAIDbZ7bjyTa9BznxM-DIfO4bEZfs3tWTI96YGx/exec";
 
-    let month = localStorage.getItem('selectedMonth') ? parseInt(localStorage.getItem('selectedMonth')) : 6;
-    let year = localStorage.getItem('selectedYear') ? parseInt(localStorage.getItem('selectedYear')) : 2025;
+    let today = new Date();
+    let month = localStorage.getItem('selectedMonth') !== null ? parseInt(localStorage.getItem('selectedMonth')) : today.getMonth();
+    let year = localStorage.getItem('selectedYear') !== null ? parseInt(localStorage.getItem('selectedYear')) : today.getFullYear();
     let currentSelect = { dateStr: '', shiftType: '' };
 
     function renderCalendar() {
