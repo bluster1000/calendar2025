@@ -143,7 +143,7 @@
 </head>
 <body>
   <h1>2025 일정표</h1>
-  <div class="version">v1.7</div>
+  <div class="version">v1.8</div>
   <div id="controls">
     <button onclick="changeMonth(-1)">&lt; 이전월</button>
     <h2 id="month-label"></h2>
@@ -265,8 +265,6 @@
       month += offset;
       if (month < 0) { month = 11; year--; }
       if (month > 11) { month = 0; year++; }
-      localStorage.setItem('selectedMonth', month);
-      localStorage.setItem('selectedYear', year);
       renderCalendar();
     }
 
