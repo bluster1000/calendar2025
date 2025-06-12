@@ -143,7 +143,7 @@
 </head>
 <body>
   <h1>2025 일정표</h1>
-  <div class="version">v1.1</div>
+  <div class="version">v1.3</div>
   <div id="controls">
     <button onclick="changeMonth(-1)">&lt; 이전월</button>
     <h2 id="month-label"></h2>
@@ -170,8 +170,8 @@
     const scriptURL = "https://script.google.com/macros/s/AKfycbz8TmjUkoFAZjFOK4QSB6nezkgaTiWAfrmfeFyxIcPJxYQlK3marN4kkQxTmtuc63zB/exec";
 
     let today = new Date();
-    let month = today.getMonth();
-    let year = today.getFullYear();
+    let month = localStorage.getItem('selectedMonth') !== null ? parseInt(localStorage.getItem('selectedMonth')) : today.getMonth();
+    let year = localStorage.getItem('selectedYear') !== null ? parseInt(localStorage.getItem('selectedYear')) : today.getFullYear();
     let currentSelect = { dateStr: '', shiftType: '' };
 
     function renderCalendar() {
@@ -265,6 +265,8 @@
       month += offset;
       if (month < 0) { month = 11; year--; }
       if (month > 11) { month = 0; year++; }
+      localStorage.setItem('selectedMonth', month);
+      localStorage.setItem('selectedYear', year);
       renderCalendar();
     }
 
